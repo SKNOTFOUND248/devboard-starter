@@ -1,0 +1,19 @@
+# Kind used a NodePort + extraPortMappings because there's no cloud load
+# balancer on Kind. On EKS there is one — so instead we tell Envoy Gateway to
+# provision its Service as type: LoadBalancer, with the annotation the AWS
+# Load Balancer Controller reads to provision a real AWS NLB.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: devboard-envoy-config
+  namespace: devboard-ns
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: LoadBalancer
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: "external"
+          service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

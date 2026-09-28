@@ -1,0 +1,6 @@
+apiVersion: v2
+name: devboard
+description: Helm chart for DevBoard (frontend + backend + postgres) on kind
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

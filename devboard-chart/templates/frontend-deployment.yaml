@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: devboard-fe
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: devboard-fe
+  template:
+    metadata:
+      labels:
+        app: devboard-fe
+    spec:
+      containers:
+        - name: devboard-frontend
+          image: {{ .Values.frontend.image }}
+          ports:
+            - containerPort: {{ .Values.frontend.containerPort }}
+          resources:
+{{ toYaml .Values.frontend.resources | indent 12 }}

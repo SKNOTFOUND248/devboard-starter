@@ -1,0 +1,55 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "k8s/eks/**"
+      - ".github/workflows/devsecops-pipeline.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/devsecops-pipeline.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  security-events: write
+
+jobs:
+  code-quality:
+    uses: ./.github/workflows/code-quality.yml
+
+  secrets-scan:
+    uses: ./.github/workflows/secrets-scan.yml
+    secrets: inherit
+
+  dependency-scan:
+    uses: ./.github/workflows/dependency-scan.yml
+
+  docker-lint:
+    uses: ./.github/workflows/docker-lint.yml
+
+  build-and-push:
+    if: github.event_name != 'pull_request'
+    needs: [code-quality, secrets-scan, dependency-scan, docker-lint]
+    uses: ./.github/workflows/build-and-push.yml
+    secrets: inherit
+
+  image-scan:
+    if: github.event_name != 'pull_request'
+    needs: build-and-push
+    uses: ./.github/workflows/image-scan.yml
+    with:
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+
+  update-manifests:
+    if: github.event_name != 'pull_request'
+    needs: [build-and-push, image-scan]
+    uses: ./.github/workflows/update-manifests.yml
+    with:
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}

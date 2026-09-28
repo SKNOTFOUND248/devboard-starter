@@ -1,0 +1,11 @@
+# Replaces the Kind hostPath PV (k8s/10-postgres-pv.yml) — on EKS, storage is
+# dynamically provisioned as real EBS volumes instead of a node-local path.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete

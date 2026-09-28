@@ -1,0 +1,49 @@
+name: Image Scan
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  BACKEND_IMAGE: trainwithshubham/devboard-backend
+  FRONTEND_IMAGE: trainwithshubham/devboard-frontend
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            image: trainwithshubham/devboard-backend
+          - name: frontend
+            image: trainwithshubham/devboard-frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner on ${{ matrix.name }} image
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ${{ matrix.image }}:${{ inputs.image_tag }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Upload Trivy SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+          category: trivy-${{ matrix.name }}

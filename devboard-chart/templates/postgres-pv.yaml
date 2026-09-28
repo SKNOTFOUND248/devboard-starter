@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+spec:
+  capacity:
+    storage: {{ .Values.postgres.pvStorage }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ .Values.postgres.storageClassName }}
+  hostPath:
+    path: {{ .Values.postgres.pvHostPath | quote }}
+    # Without this, kubelet errors "stat <path>: no such file or directory"
+    # instead of creating it — found while testing this chart on kind.
+    type: DirectoryOrCreate

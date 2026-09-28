@@ -1,0 +1,17 @@
+# ClusterIP, not NodePort — Gateway API + Envoy Gateway (12-gateway-api.yml)
+# handles external routing to this Service on EKS.
+kind: Service
+apiVersion: v1
+metadata:
+  name: frontend-service
+  namespace: devboard-ns
+
+spec:
+  selector:
+    app: devboard-fe
+
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 4173 # container port
+  type: ClusterIP

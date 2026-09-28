@@ -1,0 +1,18 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-push:
+    uses: ./.github/workflows/build-and-push.yml
+    secrets: inherit
+
+  update-manifests:
+    needs: build-and-push
+    uses: ./.github/workflows/update-manifests.yml
+    with:
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}

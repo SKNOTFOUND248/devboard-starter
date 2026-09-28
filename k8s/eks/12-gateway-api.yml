@@ -1,0 +1,43 @@
+# Gateway API v1.6.1 (standard channel) + Envoy Gateway v1.9.1.
+# GatewayClass = infra-level "here's an implementation" (platform team owns this).
+# Gateway       = "open a listener" (here: HTTP on :80).
+# HTTPRoute     = "route matching traffic to this Service" (app team owns this).
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: devboard-envoy-config
+    namespace: devboard-ns
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: devboard-gateway
+  namespace: devboard-ns
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: devboard-route
+  namespace: devboard-ns
+spec:
+  parentRefs:
+    - name: devboard-gateway
+  rules:
+    - backendRefs:
+        - name: frontend-service
+          port: 80

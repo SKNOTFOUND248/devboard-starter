@@ -1,0 +1,43 @@
+name: Update EKS Manifests
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        description: "Image tag to write into k8s/eks deployment manifests"
+        required: true
+        type: string
+
+env:
+  BACKEND_IMAGE: trainwithshubham/devboard-backend
+  FRONTEND_IMAGE: trainwithshubham/devboard-frontend
+
+jobs:
+  update-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update image tags in k8s/eks manifests
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          sed -i "s#${BACKEND_IMAGE}:.*#${BACKEND_IMAGE}:${IMAGE_TAG}#" k8s/eks/08-backend-deployment.yml
+          sed -i "s#${FRONTEND_IMAGE}:.*#${FRONTEND_IMAGE}:${IMAGE_TAG}#" k8s/eks/10-frontend-deployment.yml
+
+      - name: Commit and push updated manifests
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/eks/08-backend-deployment.yml k8s/eks/10-frontend-deployment.yml
+          if git diff --cached --quiet; then
+            echo "No manifest changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update k8s/eks image tags to ${{ inputs.image_tag }} [skip ci]"
+          git push
